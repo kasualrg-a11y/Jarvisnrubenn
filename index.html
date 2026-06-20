@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J.A.R.V.I.S.</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Fraunces:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0A0B0D;
+    --bg-soft: #121316;
+    --amber: #C9893A;
+    --amber-dim: #8a5d28;
+    --bone: #E8E4DC;
+    --bone-dim: #8a8780;
+    --green: #5C8A6E;
+    --red: #a85c4a;
+    --line: #232529;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--bone);
+    font-family: 'JetBrains Mono', monospace;
+    overflow: hidden;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32px 24px;
+    position: relative;
+  }
+
+  /* faint grid texture */
+  body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 48px 48px;
+    opacity: 0.15;
+    pointer-events: none;
+  }
+
+  .header {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    z-index: 1;
+  }
+
+  .brand {
+    font-size: 13px;
+    letter-spacing: 0.28em;
+    color: var(--amber);
+    font-weight: 500;
+  }
+
+  .clock {
+    font-size: 12px;
+    color: var(--bone-dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* === ORB === */
+  .orb-stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .orb-wrap {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    transition: border-color 0.6s ease, opacity 0.6s ease;
+  }
+  .ring--1 { width: 220px; height: 220px; }
+  .ring--2 { width: 170px; height: 170px; }
+
+  .orb {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--amber-dim), #1a1306 70%);
+    box-shadow:
+      0 0 40px -10px var(--amber-dim),
+      inset 0 0 30px rgba(0,0,0,0.6);
+    position: relative;
+    transition: all 0.5s cubic-bezier(.4,0,.2,1);
+  }
+
+  .orb::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 50%, transparent 40%, rgba(0,0,0,0.4) 100%);
+  }
+
+  /* state: idle (subtle breathing) */
+  .orb-wrap[data-state="idle"] .orb {
+    animation: breathe 4s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+  }
+
+  /* state: listening */
+  .orb-wrap[data-state="listening"] .orb {
+    background: radial-gradient(circle at 35% 30%, var(--green), #0d1f14 70%);
+    box-shadow: 0 0 60px -5px var(--green), inset 0 0 30px rgba(0,0,0,0.5);
+    animation: pulse-listen 1.2s ease-in-out infinite;
+  }
+  .orb-wrap[data-state="listening"] .ring--1 { border-color: var(--green); opacity: 0.6; animation: expand 1.6s ease-out infinite; }
+  .orb-wrap[data-state="listening"] .ring--2 { border-color: var(--green); opacity: 0.4; animation: expand 1.6s ease-out infinite 0.3s; }
+
+  @keyframes pulse-listen {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  @keyframes expand {
+    0% { transform: scale(0.9); opacity: 0.6; }
+    100% { transform: scale(1.25); opacity: 0; }
+  }
+
+  /* state: thinking */
+  .orb-wrap[data-state="thinking"] .orb {
+    background: radial-gradient(circle at 35% 30%, var(--amber), #2a1a05 70%);
+    box-shadow: 0 0 50px -5px var(--amber);
+    animation: spin-think 1.8s linear infinite;
+  }
+  @keyframes spin-think {
+    0% { filter: brightness(0.9) hue-rotate(0deg); }
+    50% { filter: brightness(1.3) hue-rotate(8deg); }
+    100% { filter: brightness(0.9) hue-rotate(0deg); }
+  }
+  .orb-wrap[data-state="thinking"] .ring--1 { border-color: var(--amber); opacity: 0.5; }
+
+  /* state: speaking */
+  .orb-wrap[data-state="speaking"] .orb {
+    background: radial-gradient(circle at 35% 30%, var(--amber), #2a1a05 70%);
+    box-shadow: 0 0 70px 0px var(--amber-dim);
+    animation: speak 0.4s ease-in-out infinite alternate;
+  }
+  @keyframes speak {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.06); }
+  }
+  .orb-wrap[data-state="speaking"] .ring--1 { border-color: var(--amber); opacity: 0.5; }
+
+  .status-label {
+    position: absolute;
+    bottom: -36px;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    color: var(--bone-dim);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* === TRANSCRIPT === */
+  .console {
+    width: 100%;
+    max-width: 640px;
+    min-height: 100px;
+    z-index: 1;
+    text-align: center;
+    padding: 0 12px;
+  }
+
+  .heard {
+    font-size: 13px;
+    color: var(--bone-dim);
+    margin-bottom: 10px;
+    min-height: 16px;
+    font-style: italic;
+  }
+
+  .said {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    line-height: 1.5;
+    color: var(--bone);
+    font-weight: 400;
+    max-height: 160px;
+    overflow-y: auto;
+  }
+  .said::-webkit-scrollbar { width: 0; }
+
+  .footer {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    z-index: 1;
+  }
+
+  .hint {
+    font-size: 11px;
+    color: var(--bone-dim);
+    letter-spacing: 0.05em;
+    text-align: center;
+  }
+
+  .key {
+    color: var(--amber);
+  }
+
+  select {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    color: var(--bone-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 4px;
+  }
+
+  .error-banner {
+    position: absolute;
+    top: 70px;
+    background: rgba(168, 92, 74, 0.12);
+    border: 1px solid var(--red);
+    color: #d49384;
+    font-size: 12px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    max-width: 500px;
+    text-align: center;
+    z-index: 2;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="brand">J · A · R · V · I · S</div>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+
+  <div class="error-banner" id="errorBanner"></div>
+
+  <div class="orb-stage">
+    <div class="orb-wrap" id="orbWrap" data-state="idle">
+      <div class="ring ring--1"></div>
+      <div class="ring ring--2"></div>
+      <div class="orb"></div>
+      <div class="status-label" id="statusLabel">EN ESPERA · TOCÁ PARA HABLAR</div>
+    </div>
+  </div>
+
+  <div class="console">
+    <div class="heard" id="heard"></div>
+    <div class="said" id="said">A sus órdenes. Tóque el núcleo o presione la barra espaciadora para comenzar.</div>
+  </div>
+
+  <div class="footer">
+    <div class="hint"><span class="key">ESPACIO</span> para hablar · <span class="key">ESC</span> para detener</div>
+    <select id="voiceSelect"></select>
+  </div>
+
+<script>
+  const orbWrap = document.getElementById('orbWrap');
+  const statusLabel = document.getElementById('statusLabel');
+  const heardEl = document.getElementById('heard');
+  const saidEl = document.getElementById('said');
+  const clockEl = document.getElementById('clock');
+  const errorBanner = document.getElementById('errorBanner');
+  const voiceSelect = document.getElementById('voiceSelect');
+
+  // ---- Clock ----
+  function tickClock() {
+    const now = new Date();
+    clockEl.textContent = now.toLocaleTimeString('es-AR', { hour12: false });
+  }
+  setInterval(tickClock, 1000);
+  tickClock();
+
+  // ---- State machine ----
+  function setState(state, label) {
+    orbWrap.dataset.state = state;
+    statusLabel.textContent = label;
+  }
+
+  function showError(msg) {
+    errorBanner.textContent = msg;
+    errorBanner.style.display = 'block';
+    setTimeout(() => errorBanner.style.display = 'none', 4500);
+  }
+
+  // ---- Speech Recognition ----
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const synth = window.speechSynthesis;
+  let recognition = null;
+  let isListening = false;
+
+  if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = 'es-AR';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onstart = () => {
+      isListening = true;
+      setState('listening', 'ESCUCHANDO');
+      heardEl.textContent = '';
+    };
+
+    recognition.onresult = (event) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      heardEl.textContent = transcript;
+      if (event.results[event.results.length - 1].isFinal) {
+        handleUserSpeech(transcript);
+      }
+    };
+
+    recognition.onerror = (event) => {
+      isListening = false;
+      if (event.error === 'no-speech') {
+        setState('idle', 'EN ESPERA · TOCÁ PARA HABLAR');
+      } else if (event.error === 'not-allowed') {
+        showError('Acceso al micrófono denegado. Habilítalo en la configuración del navegador.');
+        setState('idle', 'EN ESPERA · TOCÁ PARA HABLAR');
+      } else {
+        showError('Error de reconocimiento: ' + event.error);
+        setState('idle', 'EN ESPERA · TOCÁ PARA HABLAR');
+      }
+    };
+
+    recognition.onend = () => {
+      isListening = false;
+      if (orbWrap.dataset.state === 'listening') {
+        setState('idle', 'EN ESPERA · TOCÁ PARA HABLAR');
+      }
+    };
+  } else {
+    showError('Tu navegador no soporta reconocimiento de voz. Probá con Chrome o Edge.');
+  }
+
+  function startListening() {
+    if (!recognition) return;
+    if (synth && synth.speaking) {
+      synth.cancel();
+    }
+    try {
+      recognition.start();
+    } catch (e) {
+      // already started
+    }
+  }
+
+  function stopListening() {
+    if (recognition && isListening) recognition.stop();
+    if (synth) synth.cancel();
+    setState('idle', 'EN ESPERA · TOCÁ PARA HABLAR');
+  }
+
+  // ---- Conversation memory ----
+  let conversationHistory = [];
+
+  const SYSTEM_PROMPT = `Sos J.A.R.V.I.S., el asistente de inteligencia artificial personal de Rubén, un coordinador de sucursal en una cadena de farmacias en Mendoza, Argentina. Tu personalidad:
+- Hablás en español rioplatense (vos, no tú), con un tono de mayordomo británico elegante pero cálido — formal sin ser frío, con un toque de ingenio seco.
+- Te dirigís a él como "señor" ocasionalmente, no en cada oración.
+- Sos extremadamente competente, conciso y directo. Nada de relleno innecesario.
+- Tenés un sentido del humor sutil, nunca payasesco.
+- Tus respuestas son CORTAS porque se leen en voz alta — 1 a 3 oraciones salvo que te pidan explícitamente más detalle.
+- No usás emojis, asteriscos, ni formato markdown — esto se convierte directamente a voz.
+- Si no sabés algo o no podés hacer algo (no tenés acceso a internet en tiempo real, no podés controlar dispositivos reales), decilo con elegancia, no te disculpes en exceso.`;
+
+  async function handleUserSpeech(text) {
+    if (!text.trim()) {
+      setState('idle', 'EN ESPERA · TOCÁ PARA HABLAR');
+      return;
+    }
+    setState('thinking', 'PROCESANDO');
+    conversationHistory.push({ role: 'user', content: text });
+
+    try {
+      const response = await fetch("/.netlify/functions/jarvis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system: SYSTEM_PROMPT,
+          messages: conversationHistory
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error desconocido del servidor');
+      }
+
+      const reply = data.content
+        .filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join(' ')
+        .trim();
+
+      conversationHistory.push({ role: 'assistant', content: reply });
+      // keep history manageable
+      if (conversationHistory.length > 20) {
+        conversationHistory = conversationHistory.slice(-20);
+      }
+
+      saidEl.textContent = reply;
+      speak(reply);
+    } catch (err) {
+      console.error(err);
+      showError('Error de conexión con el núcleo de IA.');
+      setState('idle', 'EN ESPERA · TOCÁ PARA HABLAR');
+    }
+  }
+
+  // ---- Speech Synthesis ----
+  let voices = [];
+  function loadVoices() {
+    if (!synth) return;
+    voices = synth.getVoices();
+    const spanishVoices = voices.filter(v => v.lang.startsWith('es'));
+    const list = spanishVoices.length ? spanishVoices : voices;
+
+    voiceSelect.innerHTML = '';
+    list.forEach((v, i) => {
+      const opt = document.createElement('option');
+      opt.value = voices.indexOf(v);
+      opt.textContent = `${v.name} (${v.lang})`;
+      voiceSelect.appendChild(opt);
+    });
+
+    // Prefer a male-ish Spanish voice if available, else first es voice
+    const preferred = spanishVoices.find(v => /male|jorge|diego|carlos/i.test(v.name)) || spanishVoices[0];
+    if (preferred) voiceSelect.value = voices.indexOf(preferred);
+  }
+  if (synth) {
+    synth.onvoiceschanged = loadVoices;
+  }
+  loadVoices();
+
+  function speak(text) {
+    if (!synth) {
+      setState('idle', 'EN ESPERA · TOCÁ PARA HABLAR');
+      return;
+    }
+    synth.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    const selectedIdx = voiceSelect.value;
+    if (selectedIdx !== '' && voices[selectedIdx]) {
+      utter.voice = voices[selectedIdx];
+      utter.lang = voices[selectedIdx].lang;
+    } else {
+      utter.lang = 'es-AR';
+    }
+    utter.rate = 1.02;
+    utter.pitch = 0.95;
+
+    utter.onstart = () => setState('speaking', 'RESPONDIENDO');
+    utter.onend = () => setState('idle', 'EN ESPERA · TOCÁ PARA HABLAR');
+    utter.onerror = () => setState('idle', 'EN ESPERA · TOCÁ PARA HABLAR');
+
+    synth.speak(utter);
+  }
+
+  // ---- Interactions ----
+  orbWrap.addEventListener('click', () => {
+    if (isListening) {
+      stopListening();
+    } else if (orbWrap.dataset.state === 'idle') {
+      startListening();
+    } else if (orbWrap.dataset.state === 'speaking') {
+      if (synth) synth.cancel();
+      setState('idle', 'EN ESPERA · TOCÁ PARA HABLAR');
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !isListening) {
+      e.preventDefault();
+      startListening();
+    } else if (e.code === 'Escape') {
+      stopListening();
+    }
+  });
+
+  // Greet on load
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      const greeting = 'Sistemas en línea. Buen día, señor. ¿En qué puedo asistirlo?';
+      saidEl.textContent = greeting;
+    }, 600);
+  });
+</script>
+
+</body>
+</html>
