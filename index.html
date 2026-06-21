@@ -5,26 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>J.A.R.V.I.S.</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Fraunces:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
-    --bg: #0A0B0D;
-    --bg-soft: #121316;
-    --amber: #C9893A;
-    --amber-dim: #8a5d28;
-    --bone: #E8E4DC;
-    --bone-dim: #8a8780;
-    --green: #5C8A6E;
-    --red: #a85c4a;
-    --line: #232529;
+    --bg: #000000;
+    --cyan: #4FD8F7;
+    --cyan-bright: #9FF1FF;
+    --cyan-dim: #1a4a57;
+    --cyan-faint: #0d2630;
+    --green: #5CFFA3;
+    --amber: #ffb84f;
+    --red: #ff5c5c;
+    --line: #123642;
   }
 
   html, body {
     height: 100%;
     background: var(--bg);
-    color: var(--bone);
+    color: var(--cyan-bright);
     font-family: 'JetBrains Mono', monospace;
     overflow: hidden;
   }
@@ -34,11 +34,11 @@
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    padding: 32px 24px;
+    padding: 28px 20px;
     position: relative;
   }
 
-  /* faint grid texture */
+  /* faint scanline / grid texture */
   body::before {
     content: '';
     position: absolute;
@@ -46,9 +46,55 @@
     background-image:
       linear-gradient(var(--line) 1px, transparent 1px),
       linear-gradient(90deg, var(--line) 1px, transparent 1px);
-    background-size: 48px 48px;
-    opacity: 0.15;
+    background-size: 42px 42px;
+    opacity: 0.25;
     pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px,
+      rgba(79,216,247,0.025) 3px, rgba(0,0,0,0) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* === CIRCUIT BACKGROUND (svg-like via css, behind orb) === */
+  .circuit-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.55;
+  }
+  .circuit-layer svg { width: 100%; height: 100%; }
+  .circuit-line {
+    fill: none;
+    stroke: var(--cyan);
+    stroke-width: 1;
+    opacity: 0.35;
+  }
+  .circuit-node {
+    fill: var(--cyan);
+    opacity: 0.5;
+  }
+  .circuit-pulse {
+    fill: none;
+    stroke: var(--cyan-bright);
+    stroke-width: 1.6;
+    stroke-dasharray: 6 240;
+    opacity: 0.9;
+    animation: travel 7s linear infinite;
+  }
+  @keyframes travel {
+    0% { stroke-dashoffset: 0; opacity: 0; }
+    5% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { stroke-dashoffset: -700; opacity: 0; }
   }
 
   .header {
@@ -57,59 +103,92 @@
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    z-index: 1;
+    z-index: 2;
   }
 
   .brand {
-    font-size: 13px;
-    letter-spacing: 0.28em;
-    color: var(--amber);
-    font-weight: 500;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.32em;
+    color: var(--cyan-bright);
+    font-weight: 600;
+    text-shadow: 0 0 12px rgba(79,216,247,0.6);
   }
 
   .clock {
     font-size: 12px;
-    color: var(--bone-dim);
-    letter-spacing: 0.05em;
+    color: var(--cyan);
+    letter-spacing: 0.08em;
+    opacity: 0.8;
   }
 
-  /* === ORB === */
+  /* === ORB STAGE === */
   .orb-stage {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    z-index: 1;
+    z-index: 2;
   }
 
   .orb-wrap {
     position: relative;
-    width: 220px;
-    height: 220px;
+    width: 260px;
+    height: 260px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
   }
 
+  /* outer dark halo ring like reference image */
+  .halo {
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(20,60,70,0.5) 0%, rgba(0,0,0,0) 70%);
+  }
+
   .ring {
     position: absolute;
     border-radius: 50%;
-    border: 1px solid var(--line);
-    transition: border-color 0.6s ease, opacity 0.6s ease;
+    border: 1px solid var(--cyan-dim);
+    transition: border-color 0.5s ease, opacity 0.5s ease;
   }
-  .ring--1 { width: 220px; height: 220px; }
-  .ring--2 { width: 170px; height: 170px; }
+  .ring--outer { width: 240px; height: 240px; border-style: dashed; opacity: 0.35; }
+  .ring--mid   { width: 195px; height: 195px; opacity: 0.5; }
+  .ring--tick  { width: 195px; height: 195px; opacity: 0.7; }
+
+  /* tick marks ring using conic gradient mask trick */
+  .ticks {
+    position: absolute;
+    width: 195px;
+    height: 195px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(
+      var(--cyan) 0deg 1.2deg,
+      transparent 1.2deg 9deg
+    );
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 14px), #000 calc(100% - 13px), #000 100%, transparent 100%);
+            mask: radial-gradient(farthest-side, transparent calc(100% - 14px), #000 calc(100% - 13px), #000 100%, transparent 100%);
+    opacity: 0.5;
+    animation: rotate-slow 40s linear infinite;
+  }
+  @keyframes rotate-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
 
   .orb {
-    width: 120px;
-    height: 120px;
+    width: 132px;
+    height: 132px;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, var(--amber-dim), #1a1306 70%);
+    background: radial-gradient(circle at 38% 32%, var(--cyan-dim), #061018 72%);
     box-shadow:
-      0 0 40px -10px var(--amber-dim),
-      inset 0 0 30px rgba(0,0,0,0.6);
+      0 0 50px -8px var(--cyan-dim),
+      inset 0 0 30px rgba(0,0,0,0.7);
     position: relative;
     transition: all 0.5s cubic-bezier(.4,0,.2,1);
   }
@@ -119,7 +198,7 @@
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    background: radial-gradient(circle at 50% 50%, transparent 40%, rgba(0,0,0,0.4) 100%);
+    background: radial-gradient(circle at 50% 50%, transparent 35%, rgba(0,0,0,0.5) 100%);
   }
 
   /* state: idle (subtle breathing) */
@@ -128,60 +207,58 @@
   }
   @keyframes breathe {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.04); }
+    50% { transform: scale(1.035); }
   }
 
   /* state: listening */
   .orb-wrap[data-state="listening"] .orb {
-    background: radial-gradient(circle at 35% 30%, var(--green), #0d1f14 70%);
-    box-shadow: 0 0 60px -5px var(--green), inset 0 0 30px rgba(0,0,0,0.5);
-    animation: pulse-listen 1.2s ease-in-out infinite;
+    background: radial-gradient(circle at 38% 32%, var(--green), #062017 72%);
+    box-shadow: 0 0 70px -4px var(--green), inset 0 0 30px rgba(0,0,0,0.5);
+    animation: pulse-listen 1.1s ease-in-out infinite;
   }
-  .orb-wrap[data-state="listening"] .ring--1 { border-color: var(--green); opacity: 0.6; animation: expand 1.6s ease-out infinite; }
-  .orb-wrap[data-state="listening"] .ring--2 { border-color: var(--green); opacity: 0.4; animation: expand 1.6s ease-out infinite 0.3s; }
+  .orb-wrap[data-state="listening"] .ring--mid,
+  .orb-wrap[data-state="listening"] .ring--outer { border-color: var(--green); }
+  .orb-wrap[data-state="listening"] .ticks { background: repeating-conic-gradient(var(--green) 0deg 1.2deg, transparent 1.2deg 9deg); animation-duration: 10s; }
 
   @keyframes pulse-listen {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.08); }
-  }
-  @keyframes expand {
-    0% { transform: scale(0.9); opacity: 0.6; }
-    100% { transform: scale(1.25); opacity: 0; }
+    50% { transform: scale(1.09); }
   }
 
   /* state: thinking */
   .orb-wrap[data-state="thinking"] .orb {
-    background: radial-gradient(circle at 35% 30%, var(--amber), #2a1a05 70%);
-    box-shadow: 0 0 50px -5px var(--amber);
-    animation: spin-think 1.8s linear infinite;
+    background: radial-gradient(circle at 38% 32%, var(--cyan-bright), #06141c 72%);
+    box-shadow: 0 0 60px -4px var(--cyan-bright);
+    animation: spin-think 1.6s ease-in-out infinite;
   }
   @keyframes spin-think {
-    0% { filter: brightness(0.9) hue-rotate(0deg); }
-    50% { filter: brightness(1.3) hue-rotate(8deg); }
-    100% { filter: brightness(0.9) hue-rotate(0deg); }
+    0%, 100% { filter: brightness(0.95); }
+    50% { filter: brightness(1.4); }
   }
-  .orb-wrap[data-state="thinking"] .ring--1 { border-color: var(--amber); opacity: 0.5; }
+  .orb-wrap[data-state="thinking"] .ticks { animation-duration: 3s; }
 
   /* state: speaking */
   .orb-wrap[data-state="speaking"] .orb {
-    background: radial-gradient(circle at 35% 30%, var(--amber), #2a1a05 70%);
-    box-shadow: 0 0 70px 0px var(--amber-dim);
-    animation: speak 0.4s ease-in-out infinite alternate;
+    background: radial-gradient(circle at 38% 32%, var(--cyan-bright), #06141c 72%);
+    box-shadow: 0 0 80px 0px var(--cyan);
+    animation: speak 0.38s ease-in-out infinite alternate;
   }
   @keyframes speak {
     0% { transform: scale(1); }
-    100% { transform: scale(1.06); }
+    100% { transform: scale(1.07); }
   }
-  .orb-wrap[data-state="speaking"] .ring--1 { border-color: var(--amber); opacity: 0.5; }
+  .orb-wrap[data-state="speaking"] .ticks { animation-duration: 6s; }
 
   .status-label {
     position: absolute;
-    bottom: -36px;
+    bottom: -38px;
     font-size: 11px;
-    letter-spacing: 0.22em;
-    color: var(--bone-dim);
+    letter-spacing: 0.24em;
+    color: var(--cyan);
     text-transform: uppercase;
     white-space: nowrap;
+    font-family: 'Orbitron', sans-serif;
+    text-shadow: 0 0 8px rgba(79,216,247,0.5);
   }
 
   /* === TRANSCRIPT === */
@@ -189,27 +266,29 @@
     width: 100%;
     max-width: 640px;
     min-height: 100px;
-    z-index: 1;
+    z-index: 2;
     text-align: center;
     padding: 0 12px;
   }
 
   .heard {
     font-size: 13px;
-    color: var(--bone-dim);
+    color: var(--cyan);
+    opacity: 0.7;
     margin-bottom: 10px;
     min-height: 16px;
     font-style: italic;
   }
 
   .said {
-    font-family: 'Fraunces', serif;
-    font-size: 19px;
-    line-height: 1.5;
-    color: var(--bone);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--cyan-bright);
     font-weight: 400;
     max-height: 160px;
     overflow-y: auto;
+    text-shadow: 0 0 6px rgba(79,216,247,0.25);
   }
   .said::-webkit-scrollbar { width: 0; }
 
@@ -220,24 +299,26 @@
     flex-direction: column;
     align-items: center;
     gap: 14px;
-    z-index: 1;
+    z-index: 2;
   }
 
   .hint {
     font-size: 11px;
-    color: var(--bone-dim);
+    color: var(--cyan);
+    opacity: 0.6;
     letter-spacing: 0.05em;
     text-align: center;
   }
 
   .key {
-    color: var(--amber);
+    color: var(--cyan-bright);
+    opacity: 1;
   }
 
   select {
-    background: var(--bg-soft);
-    border: 1px solid var(--line);
-    color: var(--bone-dim);
+    background: rgba(13,38,48,0.6);
+    border: 1px solid var(--cyan-dim);
+    color: var(--cyan);
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     padding: 6px 10px;
@@ -247,20 +328,75 @@
   .error-banner {
     position: absolute;
     top: 70px;
-    background: rgba(168, 92, 74, 0.12);
+    background: rgba(255, 92, 92, 0.1);
     border: 1px solid var(--red);
-    color: #d49384;
+    color: #ff9d9d;
     font-size: 12px;
     padding: 10px 16px;
     border-radius: 6px;
     max-width: 500px;
     text-align: center;
-    z-index: 2;
+    z-index: 3;
     display: none;
+  }
+
+  .boot-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.8s ease;
+  }
+  .boot-text {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--cyan-bright);
+    letter-spacing: 0.3em;
+    font-size: 13px;
+    text-align: center;
+    opacity: 0.8;
+    animation: blink-soft 1.6s ease-in-out infinite;
+  }
+  @keyframes blink-soft {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.9; }
   }
 </style>
 </head>
 <body>
+
+  <!-- Tap-to-start overlay: browsers require a user gesture before audio can play -->
+  <div class="boot-overlay" id="bootOverlay">
+    <div class="boot-text">TOCÁ LA PANTALLA PARA INICIAR SISTEMAS</div>
+  </div>
+
+  <div class="circuit-layer">
+    <svg viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice">
+      <path class="circuit-line" d="M0,80 L120,80 L150,110 L260,110 L290,140 L420,140"/>
+      <path class="circuit-line" d="M1000,90 L880,90 L850,120 L720,120 L690,150 L560,150"/>
+      <path class="circuit-line" d="M0,260 L100,260 L130,230 L240,230"/>
+      <path class="circuit-line" d="M1000,270 L900,270 L870,300 L760,300"/>
+      <path class="circuit-line" d="M0,440 L140,440 L170,470 L300,470"/>
+      <path class="circuit-line" d="M1000,460 L860,460 L830,430 L700,430"/>
+      <path class="circuit-line" d="M0,540 L200,540 L230,510 L380,510"/>
+      <path class="circuit-line" d="M1000,540 L800,540 L770,510 L620,510"/>
+      <circle class="circuit-node" cx="150" cy="110" r="3"/>
+      <circle class="circuit-node" cx="290" cy="140" r="3"/>
+      <circle class="circuit-node" cx="850" cy="120" r="3"/>
+      <circle class="circuit-node" cx="130" cy="230" r="3"/>
+      <circle class="circuit-node" cx="870" cy="300" r="3"/>
+      <circle class="circuit-node" cx="170" cy="470" r="3"/>
+      <circle class="circuit-node" cx="830" cy="430" r="3"/>
+      <circle class="circuit-node" cx="230" cy="510" r="3"/>
+      <circle class="circuit-node" cx="770" cy="510" r="3"/>
+      <path class="circuit-pulse" d="M0,80 L120,80 L150,110 L260,110 L290,140 L420,140"/>
+      <path class="circuit-pulse" d="M1000,460 L860,460 L830,430 L700,430" style="animation-delay: 2.4s;"/>
+      <path class="circuit-pulse" d="M0,540 L200,540 L230,510 L380,510" style="animation-delay: 4.8s;"/>
+    </svg>
+  </div>
 
   <div class="header">
     <div class="brand">J · A · R · V · I · S</div>
@@ -271,8 +407,10 @@
 
   <div class="orb-stage">
     <div class="orb-wrap" id="orbWrap" data-state="idle">
-      <div class="ring ring--1"></div>
-      <div class="ring ring--2"></div>
+      <div class="halo"></div>
+      <div class="ring ring--outer"></div>
+      <div class="ring ring--mid"></div>
+      <div class="ticks"></div>
       <div class="orb"></div>
       <div class="status-label" id="statusLabel">EN ESPERA · TOCÁ PARA HABLAR</div>
     </div>
@@ -296,6 +434,7 @@
   const clockEl = document.getElementById('clock');
   const errorBanner = document.getElementById('errorBanner');
   const voiceSelect = document.getElementById('voiceSelect');
+  const bootOverlay = document.getElementById('bootOverlay');
 
   // ---- Clock ----
   function tickClock() {
@@ -304,6 +443,109 @@
   }
   setInterval(tickClock, 1000);
   tickClock();
+
+  // ---- Boot sound: synth sweep + applause, generated via Web Audio API ----
+  let audioCtx = null;
+
+  function playBootSound() {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
+
+    // --- Dramatic synth power-up sweep ---
+    const osc1 = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    osc1.type = 'sawtooth';
+    osc2.type = 'sine';
+    osc1.frequency.setValueAtTime(60, now);
+    osc1.frequency.exponentialRampToValueAtTime(880, now + 1.1);
+    osc2.frequency.setValueAtTime(120, now);
+    osc2.frequency.exponentialRampToValueAtTime(1760, now + 1.1);
+    gain1.gain.setValueAtTime(0.0001, now);
+    gain1.gain.exponentialRampToValueAtTime(0.22, now + 0.5);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 1.3);
+
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(400, now);
+    filter.frequency.exponentialRampToValueAtTime(4000, now + 1.1);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gain1);
+    gain1.connect(audioCtx.destination);
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 1.4);
+    osc2.stop(now + 1.4);
+
+    // --- Soft electronic "ping" accent ---
+    const ping = audioCtx.createOscillator();
+    const pingGain = audioCtx.createGain();
+    ping.type = 'sine';
+    ping.frequency.setValueAtTime(1760, now + 0.9);
+    pingGain.gain.setValueAtTime(0.0001, now + 0.9);
+    pingGain.gain.exponentialRampToValueAtTime(0.15, now + 0.95);
+    pingGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
+    ping.connect(pingGain);
+    pingGain.connect(audioCtx.destination);
+    ping.start(now + 0.9);
+    ping.stop(now + 1.7);
+
+    // --- Applause: layered filtered noise bursts ---
+    const applauseStart = now + 1.0;
+    const applauseDuration = 2.2;
+    const bufferSize = audioCtx.sampleRate * applauseDuration;
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+
+    // build a crowd-clap texture: random sparse clicks early, denser+softer later (like applause swell then settle)
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = 0;
+    }
+    const sampleRate = audioCtx.sampleRate;
+    const numClaps = 140;
+    for (let c = 0; c < numClaps; c++) {
+      const t = Math.random() * applauseDuration;
+      const idx = Math.floor(t * sampleRate);
+      const clapLen = Math.floor(sampleRate * 0.012);
+      const amp = 0.5 + Math.random() * 0.5;
+      for (let j = 0; j < clapLen && idx + j < bufferSize; j++) {
+        data[idx + j] += (Math.random() * 2 - 1) * amp * (1 - j / clapLen);
+      }
+    }
+
+    const noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+
+    const noiseFilter = audioCtx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.value = 2200;
+    noiseFilter.Q.value = 0.6;
+
+    const applauseGain = audioCtx.createGain();
+    applauseGain.gain.setValueAtTime(0.0001, applauseStart);
+    applauseGain.gain.exponentialRampToValueAtTime(0.5, applauseStart + 0.5);
+    applauseGain.gain.setValueAtTime(0.5, applauseStart + 1.1);
+    applauseGain.gain.exponentialRampToValueAtTime(0.0001, applauseStart + applauseDuration);
+
+    noiseSource.connect(noiseFilter);
+    noiseFilter.connect(applauseGain);
+    applauseGain.connect(audioCtx.destination);
+    noiseSource.start(applauseStart);
+    noiseSource.stop(applauseStart + applauseDuration);
+  }
+
+  // ---- Boot overlay: user gesture required to unlock audio on mobile ----
+  bootOverlay.addEventListener('click', () => {
+    bootOverlay.style.opacity = '0';
+    setTimeout(() => bootOverlay.remove(), 800);
+    try { playBootSound(); } catch (e) { console.warn('Audio no disponible', e); }
+    setTimeout(() => {
+      const greeting = 'Sistemas en línea. Buen día, señor. ¿En qué puedo asistirlo?';
+      saidEl.textContent = greeting;
+    }, 1400);
+  }, { once: true });
 
   // ---- State machine ----
   function setState(state, label) {
@@ -423,11 +665,7 @@
         throw new Error(data.error || 'Error desconocido del servidor');
       }
 
-      const reply = data.content
-        .filter(b => b.type === 'text')
-        .map(b => b.text)
-        .join(' ')
-        .trim();
+      const reply = data.reply;
 
       conversationHistory.push({ role: 'assistant', content: reply });
       // keep history manageable
@@ -512,14 +750,6 @@
     } else if (e.code === 'Escape') {
       stopListening();
     }
-  });
-
-  // Greet on load
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      const greeting = 'Sistemas en línea. Buen día, señor. ¿En qué puedo asistirlo?';
-      saidEl.textContent = greeting;
-    }, 600);
   });
 </script>
 
